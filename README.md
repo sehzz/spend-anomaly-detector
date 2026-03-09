@@ -26,14 +26,22 @@ In this phase, raw database exports are transformed into a clean, machine-learni
 
 ### How it works
 Data Extraction -> Processing -> Storage
-Data is fetched and saved inside the parent directory with the help of my MiniMon project(https://github.com/sehzz/MiniMon). Once the raw JSON data is available, this pipeline reads it into pandas DataFrames, applies the transformations, and saves the final output as a clean CSV file in the /data directory.
+
+Data is fetched and saved inside the parent directory with the help of my MiniMon project (https://github.com/sehzz/MiniMon). Once the raw JSON data is available, this pipeline reads it into pandas DataFrames, applies the transformations, and saves the final output as a clean CSV file in the /data directory.
 
 ### Features engineered
-day_of_week: Represents the day of the transaction (0=Mon, 6=Sun) to track weekly habits.
-week_of_month: Indicates the week (1-5) to track pay-cycle or end-of-month behaviors.
-month: Extracts the calendar month (1-12) to identify seasonal spending trends.
-category_encoded: Converts text labels into unique integers for ML processing.
-amount_log: Applies a log transformation (np.log1p) to safely squash massive outlier purchases.
-amount_vs_cat_mean: Divides the transaction by the historical category average to flag unusually large purchases (e.g., spending 3x the norm on groceries).
-rolling_7d_avg: Computes the average daily spending over the trailing 7 days for a short-term baseline.
-rolling_30d_std: Measures the 30-day standard deviation to capture recent spending volatility.
+**day_of_week**: Represents the day of the transaction (0=Mon, 6=Sun) to track weekly habits.
+
+**week_of_month**: Indicates the week (1-5) to track pay-cycle or end-of-month behaviors.
+
+**month**: Extracts the calendar month (1-12) to identify seasonal spending trends.
+
+**category_encoded**: Converts text labels into unique integers for ML processing.
+
+**amount_log**: Applies a log transformation (np.log1p) to safely squash massive outlier purchases.
+
+**amount_vs_cat_mean**: Divides the transaction by the historical category average to flag unusually large purchases (e.g., spending 3x the norm on groceries).
+
+**rolling_7d_avg**: Computes the average daily spending over the trailing 7 days for a short-term baseline.
+
+**rolling_30d_std**: Measures the 30-day standard deviation to capture recent spending volatility.
