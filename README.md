@@ -14,11 +14,16 @@ With Machine Learning becoming an industry standard, I wanted to move beyond sim
 
 ## Project Status
 Phase 1 Complete: Data ingestion and feature engineering.
-Phase 2 Complete: Model training and versioning
-Phase 3 In Progress: FastAPI prediction service
-Phase 4: Docker deployment
-Phase 5: Automated retraining via n8n
-Phase 6: Grafana monitoring dashboard
+
+Phase 2 Complete: Model training and versioning.
+
+Phase 3 In Progress: FastAPI prediction service.
+
+Phase 4: Docker deployment.
+
+Phase 5: Automated retraining via n8n.
+
+Phase 6: Grafana monitoring dashboard.
 
 ## Phase 1: Data Pipeline & Feature Engineering
 ### What was done
