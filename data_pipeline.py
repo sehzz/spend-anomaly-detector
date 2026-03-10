@@ -1,12 +1,11 @@
 import json
 import numpy as np
 from pathlib import Path
-
 import pandas as pd
+
 
 TRANSACTION_FILE = Path(__file__).parent / "resources" / "transaction_data.json"
 CATEGORIES_FILE = Path(__file__).parent / "resources" / "categories_data.json"
-
 CSV_OUTPUT_FILE = Path(__file__).parent / "data" / "processed_transactions.csv"
 
 
@@ -30,9 +29,6 @@ def run():
     print("\nData pipeline completed.")
     print("\n--- Final Cleaned Head ---")
     print(final_df.head(5))
-    # print(final_df[['transaction_date', 'amount', 'rolling_7d_avg', 'rolling_30d_std']].head(15))
-    # print(final_df.columns)
-    # print(final_df.shape)
     save_to_csv(final_df)
 
     return final_df
@@ -72,10 +68,6 @@ def merge_df(df_transactions, df_categories):
     df = df.rename(columns={'name': 'category'})
 
     print("\nData pipeline completed.")
-    # print("--- Head ---")
-    # print(df.head())
-    # print("\n--- Final Columns ---")
-    # print(df.columns.tolist())
 
     return df
 
@@ -98,10 +90,10 @@ def engineer_features(df):
     df["amount_vs_cat_mean"] = df["amount"] / df.groupby("category")["amount"].transform("mean")
 
     df = df.set_index('transaction_date')
+
     df['rolling_7d_avg'] = df['amount'].rolling('7D', min_periods=1).mean()
     df['rolling_30d_std'] = df['amount'].rolling('30D', min_periods=1).std().fillna(0)
     df = df.reset_index()
-
 
     return df
 
@@ -112,8 +104,5 @@ def save_to_csv(df):
     print(f"Processed dataset saved to: {CSV_OUTPUT_FILE}")
 
 
-
-
 if __name__ == "__main__":
     run()
-    # test()
