@@ -45,3 +45,39 @@ Data is fetched and saved inside the parent directory with the help of my MiniMo
 **rolling_7d_avg**: Computes the average daily spending over the trailing 7 days for a short-term baseline.
 
 **rolling_30d_std**: Measures the 30-day standard deviation to capture recent spending volatility.
+
+## Phase 2: Model Training & Versioning
+### What was done
+In this phase, the engineered dataset is used to train an unsupervised machine learning model to detect financial outliers.
+
+- Trained an Isolation Forest model using the 8 engineered features.
+
+- Generated both binary anomaly predictions (1 or -1) and continuous anomaly scores for every transaction.
+
+- Serialized the trained model and generated a version-controlled metadata file for downstream serving and dashboarding.
+
+### How it works
+Load CSV → Select Features → Train Model → Generate Predictions → Save Model + Metadata
+
+The processed CSV from Phase 1 is loaded, and non-feature columns (like IDs, raw text, and dates) are stripped so the model only trains on the mathematical features. The data is fed into a Scikit-Learn Isolation Forest model configured with contamination=0.05 to flag the top ~5% most unusual transactions. Once trained, the model evaluates the dataset, appending an anomaly_prediction and anomaly_score back onto the original records. Finally, the model artifact and its training metrics are saved to disk.
+
+### Model details
+- **Algorithm:** Isolation Forest
+- **Contamination:** 0.05 (expects ~5% anomalies)
+- **Training rows:** 262
+- **Anomalies detected:** 14 (5.3%)
+
+### Why Isolation Forest?
+The core reason is that we have no labelled data. I haven't manually tagged thousands of past transactions as "normal" or "anomalous," which renders supervised algorithms like Random Forest or Logistic Regression unusable.
+
+Isolation Forest is perfect for this specific use case because:
+- It handles mixed, multivariate patterns: My spending varies by category, day, and time of month, and this algorithm naturally isolates multi-dimensional outliers.
+
+- It works well on small datasets: My initial training set only contained 262 rows, which is enough for Isolation Forest to establish a baseline.
+
+- It gives you an anomaly score, not just a binary flag, which is much more useful for Grafana visualisation
+
+### Versioning
+To maintain strict version control for MLOps, the pipeline automatically saves the model artifact using a dated naming convention: model_v1_YYYYMMDD.pkl.
+
+Alongside the .pkl file, it generates a metadata.json file. This acts as a snapshot of the model's health and context, containing the model version, training date, row count, anomaly count, anomaly rate, and the exact ordered list of features used.
