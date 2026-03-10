@@ -1,2 +1,5 @@
 /resources
 /data
+/models
+__pycache__/
+.venv/
