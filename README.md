@@ -91,3 +91,46 @@ Isolation Forest is perfect for this specific use case because:
 To maintain strict version control for MLOps, the pipeline automatically saves the model artifact using a dated naming convention: model_v1_YYYYMMDD.pkl.
 
 Alongside the .pkl file, it generates a metadata.json file. This acts as a snapshot of the model's health and context, containing the model version, training date, row count, anomaly count, anomaly rate, and the exact ordered list of features used.
+
+## Phase 3: FastAPI Prediction Service
+### What was done
+(briefly describe what Phase 3 built — the API, what it accepts, what it returns)
+In this phase, we built a real-time REST API using FastAPI to serve the trained machine learning model. The service accepts raw, single-transaction JSON payloads, processes them through the exact same feature engineering pipeline used during training, and returns a live anomaly prediction along with a human-readable explanation.
+
+### How it works
+Receive Transaction JSON → Load historical data → Engineer 8 features → Run Isolation Forest → Return prediction + score + reason
+
+When the FastAPI server boots up, a lifespan context manager automatically loads the latest trained model (.pkl) and its metadata (.json) into the application's global memory. When a live transaction hits the /predict endpoint, the app temporarily loads the historical dataset to calculate contextual time-series features (like the trailing 7-day average and historical category mean). It transforms the single JSON payload into the 8-feature format the model expects, executes the prediction, and evaluates the resulting anomaly score and feature ratios to generate a plain-English alert.
+
+### Endpoints
+| Endpoint | Method | Description                                                                   |
+|----------|--------|-------------------------------------------------------------------------------|
+| /health  | GET    | Health check endpoint to verify the API is running and the model is loaded.   |
+| /predict | POST   | Predict whether a transaction is anomalous and provide an explanation.        |
+| /docs    | GET    | Interactive API documentation interface (SwaggerUI).                          |
+
+### Sample Request
+```json
+{
+    "amount": 85.00,
+    "category": "restaurants",
+    "transaction_date": "2026-03-09"
+}
+```
+
+### Sample Response
+```json
+{
+    "is_anomaly": true,
+    "anomaly_score": -0.010046247246725981,
+    "model_version": "v1_20260309",
+    "reason": "Amount is 5.5x above your restaurants average" 
+}
+```
+
+### Key design decisions
+- Lifespan state loading: The heavy .pkl model and its metadata are loaded into app.state exactly once at startup. This prevents memory leaks and keeps endpoint response times blazingly fast since the file isn't being reopened on every request.
+
+- Dynamic historical lookups: Reading the processed CSV during the prediction step ensures that time-series features (like rolling averages) are calculated using the absolute latest spending context.
+
+- Human-readable reasons: Returning a raw float anomaly score isn't actionable for an end-user. The reason field translates the underlying math into a tangible alert that can be cleanly displayed in my expense tracker's UI.

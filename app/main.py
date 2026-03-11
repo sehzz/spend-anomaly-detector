@@ -10,6 +10,8 @@ METADATA_FILE_PATH = MODELS_FILE_PATH / "metadata_v1_20260309.json"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Load the model and metadata on startup and store them in the app state."""
+    
     print("Loading model on startup...")
     model, metadata = load_model()
     app.state.model = model
@@ -21,10 +23,14 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/health")
 def read_root():
+    """Health check endpoint to verify the API is running and the model is loaded."""
+    
     return {"status": "ok"}
 
 @app.post("/predict")
 def predict(transaction: Transaction, request: Request):
+    """Predict whether a transaction is anomalous and provide an explanation."""
+    
     model = request.app.state.model
     metadata = request.app.state.metadata
     if model is None:
