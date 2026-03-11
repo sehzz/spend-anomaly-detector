@@ -17,9 +17,9 @@ Phase 1 Complete: Data ingestion and feature engineering.
 
 Phase 2 Complete: Model training and versioning.
 
-Phase 3 In Progress: FastAPI prediction service.
+Phase 3 Complete: FastAPI prediction service.
 
-Phase 4: Docker deployment.
+Phase 4 In Progress: Docker deployment.
 
 Phase 5: Automated retraining via n8n.
 
