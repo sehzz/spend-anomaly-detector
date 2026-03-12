@@ -19,9 +19,9 @@ Phase 2 Complete: Model training and versioning.
 
 Phase 3 Complete: FastAPI prediction service.
 
-Phase 4 In Progress: Docker deployment.
+Phase 4 Complete: Docker deployment.
 
-Phase 5: Automated retraining via n8n.
+Phase 5 In Progress: Automated retraining via n8n.
 
 Phase 6: Grafana monitoring dashboard.
 
