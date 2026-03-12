@@ -103,11 +103,12 @@ Receive Transaction JSON → Load historical data → Engineer 8 features → Ru
 When the FastAPI server boots up, a lifespan context manager automatically loads the latest trained model (.pkl) and its metadata (.json) into the application's global memory. When a live transaction hits the /predict endpoint, the app temporarily loads the historical dataset to calculate contextual time-series features (like the trailing 7-day average and historical category mean). It transforms the single JSON payload into the 8-feature format the model expects, executes the prediction, and evaluates the resulting anomaly score and feature ratios to generate a plain-English alert.
 
 ### Endpoints
-| Endpoint | Method | Description                                                                   |
-|----------|--------|-------------------------------------------------------------------------------|
-| /health  | GET    | Health check endpoint to verify the API is running and the model is loaded.   |
-| /predict | POST   | Predict whether a transaction is anomalous and provide an explanation.        |
-| /docs    | GET    | Interactive API documentation interface (SwaggerUI).                          |
+| Endpoint      | Method | Description                                                                   |
+|---------------|--------|-------------------------------------------------------------------------------|
+| /health       | GET    | Health check endpoint to verify the API is running and the model is loaded.   |
+| /predict      | POST   | Predict whether a transaction is anomalous and provide an explanation.        |
+| /docs         | GET    | Interactive API documentation interface (SwaggerUI).                          |
+| /bulk_predict | POST   | Accept a list of transactions and return anomaly predictions for all.         |
 
 ### Sample Request
 ```json
