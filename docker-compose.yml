@@ -1,0 +1,8 @@
+services:
+  anomaly-detector:
+    image: spend-anomaly-detector:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data

@@ -134,3 +134,23 @@ When the FastAPI server boots up, a lifespan context manager automatically loads
 - Dynamic historical lookups: Reading the processed CSV during the prediction step ensures that time-series features (like rolling averages) are calculated using the absolute latest spending context.
 
 - Human-readable reasons: Returning a raw float anomaly score isn't actionable for an end-user. The reason field translates the underlying math into a tangible alert that can be cleanly displayed in my expense tracker's UI.
+
+## Phase 4: Docker Deployment
+### What was done
+In this phase the FastAPI prediction service was containerized to ensure it runs consistently across any environment.
+
+- Authored a Dockerfile to configure the Python environment, install dependencies and expose the API on port 8000.
+
+- Implemented a .dockerignore file to deliberately exclude dynamic data, heavy model artifacts and sensitive credentials from the static image build.
+
+- Created a docker-compose.yml file to orchestrate the container and mount the omitted data and model directories as live volume at runtime.
+
+### How it works
+docker compose up → image builds → container starts → model mounts → service ready
+
+Running docker compose up builds the isolated container image and outomatically mounts the host's local data/ and models/ directories directly into the running container. Once started, the FastAPI application initializes, dynamically loading the latest model .pkl from the mounted volume via the lifespan function. The deployment can be immediately verified via a GET request to /health, after which the API is ready to accept POST request to the /predict endpoint build in Phase 3. 
+
+### Key design decisions
+- Volume mounts: Machine Learning models are dynamic. Because my automated pipeline retrains the isolation Forest model periodically, baking the .pkl file directly into the Docker image would mean I have to completely rebuild and redeploy the container every single time a new model is generated. By mounting the models/ directory as a volume, the retraining script simply frops the new model into the host folder, and the container has instant access to it - no rebuild required.
+
+- Docker Compose over raw docker run: Managing complex relative path volume mounts (e.g., -v ./models:/app/models) via a raw terminal command is tedious and highly prone to syntax or path errors across different operating systems. Docker Compose codifies this infrastructure as code, making the deployment declarative, documented, and executable with a single, simple command.
