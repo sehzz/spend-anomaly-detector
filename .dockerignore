@@ -1,0 +1,9 @@
+.venv
+__pycache__
+*.pyc
+.git
+data/*.csv
+models/*.pkl
+models/*.json
+transaction_data.json
+categories_data.json
