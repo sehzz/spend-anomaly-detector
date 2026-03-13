@@ -72,3 +72,14 @@ def bulk_predict(transactions: list[Transaction], request: Request):
     """Predict anomalies for a list of transactions."""
     
     return [predict(txn, request) for txn in transactions]
+
+@app.post("/reload")
+def reload_model(request: Request):
+    """Endpoint to manually reload the model and metadata."""
+    
+    model, metadata = load_model()
+    request.app.state.model = model
+    request.app.state.metadata = metadata
+    model_version = metadata.get("version", "unknown")
+
+    return {"status": "model reloaded", "model_version": model_version}
