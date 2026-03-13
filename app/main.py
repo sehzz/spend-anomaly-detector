@@ -66,3 +66,9 @@ def predict(transaction: Transaction, request: Request):
         "model_version": model_version,
         "reason": reason
     }
+
+@app.post("/bulk_predict")
+def bulk_predict(transactions: list[Transaction], request: Request):
+    """Predict anomalies for a list of transactions."""
+    
+    return [predict(txn, request) for txn in transactions]
