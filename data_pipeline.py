@@ -2,6 +2,7 @@ import json
 import numpy as np
 from pathlib import Path
 import pandas as pd
+from Helper import copy_file_from_minimon, transform_data
 
 
 TRANSACTION_FILE = Path(__file__).parent / "resources" / "transaction_data.json"
@@ -10,6 +11,10 @@ CSV_OUTPUT_FILE = Path(__file__).parent / "data" / "processed_transactions.csv"
 
 
 def run():
+    print("Copying files from MiniMon...")
+    copy_file_from_minimon("transaction_data.json")
+    transform_data()
+
     print("Running data pipeline...")
     
     transactions_data = get_data(TRANSACTION_FILE)
@@ -41,7 +46,6 @@ def get_data(file):
 def process_data(data):
     df = pd.DataFrame(data)
 
-
     return df
 
 def merge_df(df_transactions, df_categories):
@@ -66,8 +70,6 @@ def merge_df(df_transactions, df_categories):
 
     df = df.drop(columns=cols_to_drop, errors='ignore')
     df = df.rename(columns={'name': 'category'})
-
-    print("\nData pipeline completed.")
 
     return df
 

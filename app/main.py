@@ -1,9 +1,9 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from contextlib import asynccontextmanager
-from app.model import load_model, Transaction, prepare_features
 
+from app.model import Transaction, load_model, prepare_features
 
 MODELS_FILE_PATH = Path(__file__).parent.parent / "models"
 METADATA_FILE_PATH = MODELS_FILE_PATH / "metadata_v1_20260309.json"
@@ -22,10 +22,13 @@ app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/health")
-def read_root():
+def read_root(request: Request):
     """Health check endpoint to verify the API is running and the model is loaded."""
     
-    return {"status": "ok"}
+    metadata = request.app.state.metadata
+    model_version = metadata.get("version", "unknown")
+
+    return {"status": "ok", "model_version": model_version}
 
 @app.post("/predict")
 def predict(transaction: Transaction, request: Request):
@@ -72,3 +75,14 @@ def bulk_predict(transactions: list[Transaction], request: Request):
     """Predict anomalies for a list of transactions."""
     
     return [predict(txn, request) for txn in transactions]
+
+@app.post("/reload")
+def reload_model(request: Request):
+    """Endpoint to manually reload the model and metadata."""
+    
+    model, metadata = load_model()
+    request.app.state.model = model
+    request.app.state.metadata = metadata
+    model_version = metadata.get("version", "unknown")
+
+    return {"status": "model reloaded", "model_version": model_version}
