@@ -155,3 +155,35 @@ Running docker compose up builds the isolated container image and outomatically 
 - Volume mounts: Machine Learning models are dynamic. Because my automated pipeline retrains the isolation Forest model periodically, baking the .pkl file directly into the Docker image would mean I have to completely rebuild and redeploy the container every single time a new model is generated. By mounting the models/ directory as a volume, the retraining script simply frops the new model into the host folder, and the container has instant access to it - no rebuild required.
 
 - Docker Compose over raw docker run: Managing complex relative path volume mounts (e.g., -v ./models:/app/models) via a raw terminal command is tedious and highly prone to syntax or path errors across different operating systems. Docker Compose codifies this infrastructure as code, making the deployment declarative, documented, and executable with a single, simple command.
+
+## Phase 5: Automated Retraining Pipeline
+### What was done
+In this phase, I built a fully automated MLOps pipeline using self-hosted n8n. This workflow continuously updates the machine learning model with the latest financial data and deploys it to the live FastAPI application with zero downtime.
+
+### How it works
+Schedule Trigger → Run data_pipeline.py → Run train.py → Call /reload API → Send Email Notification
+
+Every Sunday at midnight, the n8n workflow automatically wakes up. It first executes an SSH command to run the data pipeline, pulling the newest database transactions and engineering fresh features. Next, it triggers the training script to generate a new Isolation Forest model and metadata file. Instead of taking the FastAPI server offline to apply the update, n8n makes an HTTP POST request to a custom /reload endpoint on the API, which hot-swaps the new model into the application's memory. Finally, it sends a formatted email notification confirming the successful deployment.
+
+### n8n Workflow Nodes
+| Node               | Type                | What it does                                                                                             |
+|--------------------|---------------------|----------------------------------------------------------------------------------------------------------|
+| Schedule Trigger   | Schedule Trigger    | Triggers the automated workflow automatically every Sunday at midnight.                                  |
+| data_pipeline.py   | SSH Execute Command | Executes the Python script to fetch new database records and engineer updated features.                  |
+| train.py           | SSH Execute Command | Trains a new Isolation Forest model on the refreshed dataset and saves the new .pkl and .json artifacts. |
+| /reload            | HTTP Request        | Sends a POST request to the live FastAPI app to hot-reload the new model into app.state.                 |
+| Email Notification | Gmail               | Sends a dynamically populated confirmation email containing the new model version and reload status.     |
+
+### Sample Automated Email Notification
+
+Your spend anomaly detector has been automatically retrained.
+
+Model Version: v1_20260315
+Status: model reloaded
+Retrained at: 2026-03-15T00:01:45Z
+
+The API has been hot-reloaded with the new model and is ready to serve predictions.
+
+### Key design decisions
+- Hot-reloading over container restarts: Restarting the entire Docker container every week causes temporary API downtime and drops active requests. By building a /reload endpoint that simply updates the app.state.model object in memory, the API achieves true zero-downtime model deployments.
+- n8n over a simple cron job: While a standard bash cron job could technically run these scripts, cron is "silent" and notoriously difficult to monitor. n8n provides a visual pipeline, built-in error handling, native HTTP request nodes, and seamless Gmail integration, making the MLOps pipeline highly observable and robust.
