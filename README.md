@@ -175,15 +175,13 @@ Every Sunday at midnight, the n8n workflow automatically wakes up. It first exec
 | Email Notification | Gmail               | Sends a dynamically populated confirmation email containing the new model version and reload status.     |
 
 ### Sample Automated Email Notification
-
+```text
 Your spend anomaly detector has been automatically retrained.
-
 Model Version: v1_20260315
 Status: model reloaded
 Retrained at: 2026-03-15T00:01:45Z
-
 The API has been hot-reloaded with the new model and is ready to serve predictions.
-
+```
 ### Key design decisions
 - Hot-reloading over container restarts: Restarting the entire Docker container every week causes temporary API downtime and drops active requests. By building a /reload endpoint that simply updates the app.state.model object in memory, the API achieves true zero-downtime model deployments.
 - n8n over a simple cron job: While a standard bash cron job could technically run these scripts, cron is "silent" and notoriously difficult to monitor. n8n provides a visual pipeline, built-in error handling, native HTTP request nodes, and seamless Gmail integration, making the MLOps pipeline highly observable and robust.
