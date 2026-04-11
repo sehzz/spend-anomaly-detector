@@ -1,15 +1,18 @@
+from datetime import datetime
 import json
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel
+from lib.database.entities import Database as db
 
 import joblib
 
 
 MODELS_FILE_PATH = Path(__file__).parent.parent / "models"
 CSV_OUTPUT_FILE = Path(__file__).parent.parent / "data" / "processed_transactions.csv"
+Grafana = db(app_name="grafana_db")
 
 
 class Transaction(BaseModel):
@@ -93,6 +96,30 @@ def prepare_features(transaction: Transaction):
     
     return df[features_list]
 
+def log_prediction(
+        amount: float,
+        category: str,
+        transaction_date: str,
+        is_anomaly: bool,
+        anomaly_score: float,
+        reason: str,
+        model_version: str
+        ):
+    
+    Grafana.insert_data_to_table(
+        table_name="prediction_logs",
+        data={
+            "amount": amount,
+            "predicted_at": datetime.utcnow().isoformat(),
+            "category": category,
+            "transaction_date": transaction_date,
+            "is_anomaly": is_anomaly,
+            "anomaly_score": anomaly_score,
+            "reason": reason,
+            "model_version": model_version
+        }
+    )
+    
 
 if __name__ == "__main__":
     # print(load_model())
