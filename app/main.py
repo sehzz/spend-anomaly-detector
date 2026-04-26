@@ -1,3 +1,16 @@
+"""
+Spend Anomaly Detector — FastAPI Prediction Service
+
+Endpoints:
+    GET  /health        — Health check, returns active model version
+    POST /predict       — Score a single transaction
+    POST /bulk_predict  — Score a list of transactions
+    POST /reload        — Hot-reload the latest trained model
+    GET  /docs          — Interactive API documentation (Swagger UI)
+
+Date format: All transaction_date fields must use YYYY-MM-DD format.
+"""
+
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -23,7 +36,17 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/health")
 def read_root(request: Request):
-    """Health check endpoint to verify the API is running and the model is loaded."""
+    """
+    Health check endpoint to verify the API is running and the model is loaded.
+    
+    Returns the current status and the active model version.
+    
+    Example response:
+        {
+            "status": "ok",
+            "model_version": "v1_20260425"
+        }
+    """
     
     metadata = request.app.state.metadata
     model_version = metadata.get("version", "unknown")
@@ -32,7 +55,29 @@ def read_root(request: Request):
 
 @app.post("/predict")
 def predict(transaction: Transaction, request: Request):
-    """Predict whether a transaction is anomalous and provide an explanation."""
+    """
+    Predict whether a single transaction is anomalous.
+    
+    Accepts a transaction JSON payload, engineers the required features using
+    historical data, and returns an anomaly prediction with a human-readable reason.
+    
+    Note: transaction_date must be in YYYY-MM-DD format.
+    
+    Example request:
+        {
+            "amount": 2200.00,
+            "category": "subscriptions",
+            "transaction_date": "2026-04-25"
+        }
+    
+    Example response:
+        {
+            "is_anomaly": true,
+            "anomaly_score": -0.134,
+            "model_version": "v1_20260425",
+            "reason": "Amount is 111.7x above your subscriptions average"
+        }
+    """
     
     model = request.app.state.model
     metadata = request.app.state.metadata
@@ -82,13 +127,61 @@ def predict(transaction: Transaction, request: Request):
 
 @app.post("/bulk_predict")
 def bulk_predict(transactions: list[Transaction], request: Request):
-    """Predict anomalies for a list of transactions."""
+    """
+    Predict anomalies for a list of transactions in a single request.
+    
+    Accepts a list of transaction objects and returns a prediction for each.
+    Used by MiniMon to score weekly transactions in bulk and generate alerts.
+    
+    Note: transaction_date must be in YYYY-MM-DD format for all transactions.
+    
+    Example request:
+        [
+            {
+                "amount": 85.00,
+                "category": "restaurants",
+                "transaction_date": "2026-04-25"
+            },
+            {
+                "amount": 3.50,
+                "category": "transportation",
+                "transaction_date": "2026-04-25"
+            }
+        ]
+    
+    Example response:
+        [
+            {
+                "is_anomaly": true,
+                "anomaly_score": -0.010,
+                "model_version": "v1_20260425",
+                "reason": "Amount is 5.5x above your restaurants average"
+            },
+            {
+                "is_anomaly": false,
+                "anomaly_score": 0.055,
+                "model_version": "v1_20260425",
+                "reason": "Transaction appears normal"
+            }
+        ]
+    """
     
     return [predict(txn, request) for txn in transactions]
 
 @app.post("/reload")
 def reload_model(request: Request):
-    """Endpoint to manually reload the model and metadata."""
+    """
+    Hot-reload the latest trained model and metadata without restarting the server.
+    
+    Called automatically by the n8n retraining pipeline every Sunday after
+    train.py completes. Picks up the latest .pkl file from the models/ directory.
+    
+    Example response:
+        {
+            "status": "model reloaded",
+            "model_version": "v1_20260425"
+        }
+    """
     
     model, metadata = load_model()
     request.app.state.model = model
