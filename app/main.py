@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 
-from app.model import Transaction, load_model, prepare_features
+from app.model import Transaction, load_model, log_prediction, prepare_features
 
 MODELS_FILE_PATH = Path(__file__).parent.parent / "models"
 METADATA_FILE_PATH = MODELS_FILE_PATH / "metadata_v1_20260309.json"
@@ -62,6 +62,16 @@ def predict(transaction: Transaction, request: Request):
         reason = "Mildly unusual transaction"
 
     model_version = metadata.get("version", "unknown")
+
+    log_prediction(
+        amount=transaction.amount,
+        category=transaction.category,
+        transaction_date=transaction.transaction_date,
+        is_anomaly=is_anomaly,
+        anomaly_score=score_val,
+        reason=reason,
+        model_version=model_version
+    )
 
     return {
         "is_anomaly": bool(pred_val == -1),

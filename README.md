@@ -1,6 +1,12 @@
 # spend-anomaly-detector
 Production MLOps pipeline that detects anomalous personal transactions using Isolation Forest — with FastAPI, Docker, Grafana monitoring, and automated weekly retraining via n8n.
 
+## Dashboard Preview
+![Grafana Dashboard](dashboard.png)
+
+## Architecture
+![Architecture Diagram](Architecture_Diagram.drawio.png)
+
 ## What this project does
 This project is an end-to-end machine learning pipeline that identifies unusual spending patterns in my personal financial data. It ingests raw transaction logs and category data, engineers time-series features, and outputs flagged anomalies to help catch accidental overcharges or out-of-character spending.
 
@@ -21,9 +27,9 @@ Phase 3 Complete: FastAPI prediction service.
 
 Phase 4 Complete: Docker deployment.
 
-Phase 5 In Progress: Automated retraining via n8n.
+Phase 5 Complete: Automated retraining via n8n.
 
-Phase 6: Grafana monitoring dashboard.
+Phase 6 Complete: Grafana monitoring dashboard.
 
 ## Phase 1: Data Pipeline & Feature Engineering
 ### What was done
