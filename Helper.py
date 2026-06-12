@@ -1,11 +1,30 @@
 import json
-from pathlib import Path
-import shutil
 import os
+import shutil
+from pathlib import Path
+from pydantic import BaseModel
 
 
 TRANSACTION_FILE = Path(__file__).parent / "resources" / "transaction_data.json"
+SEHAJ_USER_ID = "1b9db96d-0871-42ca-bba9-d5d4e9a5d381"
 
+
+class Transaction(BaseModel):
+    """class representing a transaction."""
+
+    id: int
+    description: str
+    user_id: str
+    amount: float
+    created_at: str
+    transaction_date: str
+    category_id: int
+
+    @property
+    def _is_sehaj_user(self):
+        """Filtering the obj based on the user_id, only the transactions of Sehaj will be returned."""
+
+        return self.user_id == SEHAJ_USER_ID
 
 def copy_file_from_minimon(filename):
     """
@@ -43,11 +62,28 @@ def copy_file_from_minimon(filename):
         return False
 
 def transform_data():
+    """
+    Transforms the data in the JSON file by removing the "data" key and 
+    filtering out transactions that do not belong to Sehaj.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     with open(TRANSACTION_FILE) as f:
         data = json.load(f)
     
+    data = data.get("data", [])
+
+    for item in data:
+        transaction = Transaction(**item)
+        if not transaction._is_sehaj_user:
+            data.remove(item)
+
     with open(TRANSACTION_FILE, "w") as f:
-        json.dump(data["data"], f, indent=4)
+        json.dump(data, f, indent=4)
         
     print("Data transformation complete. The 'data' key has been removed from the JSON file.")
     return
